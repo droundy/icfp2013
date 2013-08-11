@@ -128,6 +128,9 @@ enumerate_program :: Int -> OperatorSet -> [Ast]
 enumerate_program n musthave0 = enumerate_expression (n-1) musthave musthave
   where musthave = musthave0 `difference` op_bonus
 
+enumerate_all :: Int -> [Ast]
+enumerate_all n = enumerate_expression (n-1) empty ops_all
+
 enumerate_expression :: Int -> OperatorSet -> OperatorSet -> [Ast]
 enumerate_expression n musthave mayhave
   | musthave `overlapsWith` op_tfold  =
