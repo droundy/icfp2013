@@ -81,7 +81,7 @@ makeGuess which_process _ [] = fail (which_process ++ " method failed!")
 makeGuess which_process prob (b:bs) =
   do r <- submitGuess prob b
      case r of
-       Nothing -> do putStrLn "We won, we won!!!"
+       Nothing -> do putStrLn $ "We won, won!! " ++ which_process ++ " is the best!!!"
                      writeFile (problemDir prob ++ "solved") "solved\n"
        Just (inp, out, _) ->
          do putStrLn $ "I could do better on " ++ niceHex inp
