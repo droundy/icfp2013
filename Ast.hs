@@ -593,8 +593,8 @@ enumerate_simple n =
        b_list = filter (/= Zero) $ enumerate_constants_fast (n-i-1),
    ii <- [0..i-1],
    jj <- if i == n-i
-         then [ii .. n-i-1-1]
-         else [0 .. n-i-1-1],
+         then [ii .. length b_list - 1]
+         else [0 .. length b_list - 1],
    let a = a_list !! ii
        b = b_list !! jj] ++
   [op a b |
@@ -604,8 +604,8 @@ enumerate_simple n =
        b_list = enumerate_simple (n-i-1),
    ii <- [0..i-1],
    jj <- if i == n-i
-         then [ii .. n-i-1-1]
-         else [0 .. n-i-1-1],
+         then [ii .. length b_list - 1]
+         else [0 .. length b_list - 1],
    let a = a_list !! ii
        b = b_list !! jj] ++
   [If0 a b c |
