@@ -15,8 +15,11 @@ import System.Environment ( getArgs )
 
 url path = "http://icfpc2013.cloudapp.net/" ++ path ++ "?auth=0175jv6XdpWdKm9pYxVcBgmSMCIlP4aVxQxZ3PqOvpsH1H"
 
-getdata :: String -> String -> IO String
-getdata path body = do if length body < 128
+data Speed = Fast | Slow
+
+getdata :: Speed -> String -> String -> IO String
+getdata speed path body =
+                    do if length body < 128
                          then putStrLn ("body is:\n" ++ body)
                          else putStrLn ("body length is: " ++ show (length body))
                        a <- simpleHTTP (postRequestWithBody (url path) "text/text" body)
@@ -24,7 +27,9 @@ getdata path body = do if length body < 128
                        if take (length "Too many requests") response == "Too many requests"
                          then do putStrLn response
                                  putStrLn "Too many requests! (trying again)"
-                                 threadDelay 5000000 -- five seconds
+                                 case speed of
+                                   Slow -> threadDelay 20000000 -- twenty seconds
+                                   Fast -> threadDelay  1000000 -- one seconds
                                  getdata path body
                          else return response
 
@@ -39,7 +44,7 @@ data Problem = Problem {
 
 submitEval :: Problem -> [Word64] -> IO [Word64]
 submitEval p g =
-  do d <- getdata "eval" ("{\"id\":" ++ show (problemid p) ++ ",\"arguments\":" ++ hexes g ++ "}")
+  do d <- getdata Slow "eval" ("{\"id\":" ++ show (problemid p) ++ ",\"arguments\":" ++ hexes g ++ "}")
      if length d < 128
        then putStrLn $ "Response was: " ++ d
        else putStrLn $ "Response was length " ++ show (length d)
@@ -53,7 +58,7 @@ submitEval p g =
 
 submitGuess :: Problem -> Ast -> IO (Maybe (Word64, Word64, Word64))
 submitGuess prob p =
-  do d <- getdata "guess" ("{\"id\":" ++ show (problemid prob) ++ ",\"program\":" ++ show (lispify p) ++ "}")
+  do d <- getdata Fast "guess" ("{\"id\":" ++ show (problemid prob) ++ ",\"program\":" ++ show (lispify p) ++ "}")
      putStrLn d
      case decode d of
        Error e -> fail $ "submitGuess error " ++ e
