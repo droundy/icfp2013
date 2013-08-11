@@ -125,7 +125,8 @@ xyz10_asts = [Z, Y, X, One, Zero]
 
 -- enumerate (requires a size and TWO OperatorSets (definitely and maybe))
 enumerate_program :: Int -> OperatorSet -> [Ast]
-enumerate_program n musthave = enumerate_expression (n-1) musthave musthave
+enumerate_program n musthave0 = enumerate_expression (n-1) musthave musthave
+  where musthave = musthave0 `difference` op_bonus
 
 enumerate_expression :: Int -> OperatorSet -> OperatorSet -> [Ast]
 enumerate_expression n musthave mayhave

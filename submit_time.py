@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import subprocess
 import os
 import time
@@ -26,17 +27,21 @@ def main():
             #we can do many of these at once if we so desire
             startTime = time.time()
             currentProcess = subprocess.Popen(["./make_guess",size,problem,"time"] + problems_list)
-            while (time.time() - startTime) < 4*60:
+            done = False
+            while ((time.time() - startTime) < 4*60) and (not done):
                 if (currentProcess.poll() == 0):
                     with open("%s/%s/fast"%(dirname,problem),"w") as notefile:
                         pass
+                    done = True
+                time.sleep(1)
             try:
                 currentProcess.kill()
-                print "==== process did not finish =====+++++++++++++++"
+                print "==== process did not finish ++++++++++++++++++++++++++++++++++++++++++++++++++"
                 with open("%s/%s/slow"%(dirname,problem),"w") as notefile:
                     pass
             except:
-                print "process finished"
+                print "==== process finished --------------------------------------------------"
+        return 0
 
 if __name__ == '__main__':
     main()

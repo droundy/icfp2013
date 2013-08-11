@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import os
 import sys
 import time
@@ -24,7 +25,7 @@ def main():
             if os.path.exists(os.path.join(dirname, problem, "solved")):
                 print "problem %s is already solved" % problem
             else:
-                os.system("./make_guess %s %s %s"%(size, problem, problems_str))
+                os.system("./make_guess %s %s %s fast"%(size, problem, problems_str))
                 #time.sleep(10)
 
 if __name__ == '__main__':
