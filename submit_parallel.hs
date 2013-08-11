@@ -124,7 +124,7 @@ main =
                 command_end = " " ++ (unwords $ map show results)
                 commands = [command_begin ++ meth ++ command_end | meth <- methods]
             r <- mapM createProcess (map shell commands)
-            threadDelay 300000000 -- hokey way of making sure it stays open for 5 mins
+            threadDelay 400000000 -- hokey way of making sure it stays open for over mins (will be killed after a bit after 5 anyway)
             return ()
        "standard" ->
          do if solved tr then fail "We already solved it."
@@ -191,6 +191,12 @@ main =
               else return ()
             do
                let programs = enumerate_all 12
+               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
+       "bonus" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_bonus (problemsize tr) (operators tr)
                makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
 
 timeMe :: String -> Integer -> IO Integer
