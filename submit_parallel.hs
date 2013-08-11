@@ -103,7 +103,7 @@ readInfo which sz ident =
      return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
 
 srun = "" --"srun -t " ++ show time_limit ++ " "
-methods = ["standard", "12all", "11all", "10all", "9all", "8all", "7all", "6all", "5all", "4all", "3all"]
+methods = ["standard", "bonus", "16all", "15all", "14all", "13all", "12all", "11all", "10all", "9all", "8all", "7all", "6all", "5all", "4all", "3all"]
 
 main =
   do nstr:i:test_or_prog:which_process:eval_results <- getArgs
@@ -191,6 +191,30 @@ main =
               else return ()
             do
                let programs = enumerate_all 12
+               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
+       "13all" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_all 13
+               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
+       "14all" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_all 14
+               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
+       "15all" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_all 15
+               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
+       "16all" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_all 16
                makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
        "bonus" ->
          do if solved tr then fail "We already solved it."
