@@ -1,7 +1,7 @@
 #!/bin/sh
-#SBATCH
+#SBATCH --time=5
 ##SBATCH --mail-type ALL
-#SBATCH --output paralell-$1-$2
+#SBATCH --output parallel_submit-%j.out
 
-time ./submit_parallel $1 $2 train master
+time ./submit_parallel $1 $2 program master
 
