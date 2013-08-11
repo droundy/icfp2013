@@ -32,6 +32,7 @@ data Problem = Problem {
   problemid :: String,
   problemsize :: Int,
   operators :: OperatorSet,
+  fast :: Bool,
   solved :: Bool
   }
              deriving ( Show )
@@ -96,16 +97,19 @@ readInfo which sz ident =
            problemid = ident,
            problemsize = sz,
            operators = empty,
+           fast = False,
            solved = False }
      ops <- readFile (problemDir prob ++ "operators")
      alreadydone <- doesFileExist (problemDir prob ++ "solved")
-     return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
+     isfast <- doesFileExist (problemDir prob ++ "fast")
+     return prob { operators = toOperatorSet $ read ops, solved = alreadydone, fast = isfast }
 
 main = do nstr:i:args <- getArgs
           let todo = case args of
                 [] -> ""
                 _ | "time" `elem` args -> "time"
                   | "count-programs" `elem` args -> "count-programs"
+                  | "fast" `elem` args -> "fast"
                   | "problem" `elem` args -> ""
               kind = if "problem" `elem` args
                      then DoProblem
@@ -134,6 +138,13 @@ main = do nstr:i:args <- getArgs
                      a <- submitEval tr guesses
                      let programs = enumerate_program (problemsize tr) (operators tr)
                      makeGuess tr $ filter (\p -> map (eval p) guesses == a) programs
+            "fast" -> do if solved tr then fail "We already solved it."
+                                      else return ()
+                         if not (fast tr)
+                           then putStrLn "It is not fast."
+                           else do a <- submitEval tr guesses
+                                   let programs = enumerate_program (problemsize tr) (operators tr)
+                                   makeGuess tr $ filter (\p -> map (eval p) guesses == a) programs
 
 
 timeMe :: String -> Integer -> IO Integer
