@@ -103,7 +103,7 @@ readInfo which sz ident =
      return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
 
 time_limit = 5
-srun = "" --"srun -t " ++ show time_limit ++ " "
+srun = "srun -c10 -t " ++ show time_limit ++ " "
 methods = ["standard", "3all", "4all", "5all", "6all", "7all", "8all", "9all", "10all", "11all"]
 
 main =
