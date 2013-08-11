@@ -103,7 +103,7 @@ readInfo which sz ident =
      return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
 
 srun = "" --"srun -t " ++ show time_limit ++ " "
-methods = ["standard", "bonus", "16all", "10all", "7all"]
+methods = ["standard", "simple", "bonus", "16all", "11all", "7all"]
 
 main =
   do nstr:i:test_or_prog:which_process:eval_results <- getArgs
@@ -124,7 +124,7 @@ main =
                 command_end = " " ++ (unwords $ map show results)
                 commands = [command_begin ++ meth ++ command_end | meth <- methods]
             r <- mapM createProcess (map shell commands)
-            threadDelay 400000000 -- hokey way of making sure it stays open for over mins (will be killed after a bit after 5 anyway)
+            threadDelay 400000000 -- hokey way of making sure it stays open for over mins (will be killed after 5 anyway)
             return ()
        "standard" ->
          do if solved tr then fail "We already solved it."
@@ -132,53 +132,11 @@ main =
             do
                let programs = enumerate_program (problemsize tr) (operators tr)
                makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "3all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 3
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "4all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 4
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "5all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 5
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "6all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 6
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
        "7all" ->
          do if solved tr then fail "We already solved it."
               else return ()
             do
                let programs = enumerate_all 7
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "8all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 8
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "9all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 9
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "10all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 10
                makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
        "11all" ->
          do if solved tr then fail "We already solved it."
@@ -186,35 +144,17 @@ main =
             do
                let programs = enumerate_all 11
                makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "12all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 12
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "13all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 13
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "14all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 14
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "15all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 15
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
        "16all" ->
          do if solved tr then fail "We already solved it."
               else return ()
             do
                let programs = enumerate_all 16
+               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
+       "simple" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_all_simple 500
                makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
        "bonus" ->
          do if solved tr then fail "We already solved it."
