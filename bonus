@@ -19,7 +19,7 @@
 
  (if0 (and A 1) B C)
  A, B, C all odd size and >= 5
- never (x x) (1 1) or (0 0)
+ never (x x) (1 1) or (0 0) -- NOT TRUE
 
 ;;;;;;;;;;;;;;;;;; indented ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -87,8 +87,6 @@
        (plus x (xor x 1))
        (plus (xor 1 x) 1)))
 
-
-
 (lambda (x)
   (if0 (and (xor x (plus (shr16 (not x)) x)) 1)
        (not (xor (shl1 1) (shr4 (shl1 x))))
@@ -110,3 +108,28 @@ lambda (x_16) (if0 (and (or (shr16 x_16) (if0 (plus (or (or 0 x_16) 0) 1) 0 x_16
   (if0 (and (xor 1 (shr4 (or (shr1 x) x))) 1)
   (xor (shr16 (shr4 x)) (plus 1 x))
   (not (xor (shl1 x) x))))
+
+U4oKyJg8MPLo45sHFxzPBhkA:
+(lambda (x)
+  (if0 (and (xor (or (shr4 (shr16 x)) x) x) 1)
+       (plus x (not (shr1 x)))
+       (or x (not (shl1 x)))))
+
+   If0 (And (If0 (Not X) Zero One) One)
+       (And One (And One Zero))
+       (If0 (Not One) One One)
+
+   If0 (And (If0 (Not X) Zero One) One)
+       (And Zero (Not (Not One)))
+       (If0 (Not X) One One)
+
+(lambda (x)
+  (if0 (and (not (xor (xor (if0 x 1 (shr1 x)) 1) 0)) 1)            13
+  (or x (shl1 (xor (if0 x 0 1) x)))                                 9
+  (xor (not (or (if0 (shr1 (shr1 (not x))) (shr1 0) x) 1)) x)))    13
+
+
+(lambda (x)
+  (if0 (and (shr4 (or (if0 (plus (not (shr1 (shr16 x))) x) (not x) x) 1)) 1)
+       (shr16 (or (shr4 (if0 (plus (and x x) (shr4 x)) x 1)) x))
+       (plus (plus (if0 (plus (and (shr4 x) x) x) 0 x) x) 1)))
