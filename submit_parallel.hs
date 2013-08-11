@@ -2,10 +2,10 @@ module Main where
 
 import System.Process
 import Data.Word ( Word64 )
-import System.Exit ( exitSuccess )
+import System.Exit ( exitSuccess, ExitCode( ExitSuccess ) )
 import System.CPUTime ( getCPUTime )
 import System.Random
-import Control.Concurrent ( threadDelay )
+import Control.Concurrent ( threadDelay, myThreadId, killThread, forkIO )
 
 import Ast
 import Network.HTTP
@@ -124,6 +124,17 @@ main =
                 command_end = " " ++ (unwords $ map show results)
                 commands = [command_begin ++ meth ++ command_end | meth <- methods]
             r <- mapM createProcess (map shell commands)
+            mainid <- myThreadId
+            let waitforsuccess procid =
+                  do retval <- waitForProcess procid
+                     case retval of
+                       ExitSuccess -> do putStrLn "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                                         putStrLn "WE WON!!! WE WON!!! WE WON!!! WE WON!!! WE WON!!!"
+                                         mapM_ (\(_,_,_,pid) -> terminateProcess pid) r
+                                         killThread mainid
+                       _ -> do putStrLn "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                               putStrLn "A process died horribly..."
+            mapM (\(_,_,_,pid) -> forkIO $ waitforsuccess pid) r
             threadDelay 400000000 -- hokey way of making sure it stays open for over mins (will be killed after 5 anyway)
             return ()
        "standard" ->
