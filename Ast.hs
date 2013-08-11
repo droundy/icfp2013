@@ -559,7 +559,8 @@ hexes = show . map niceHex
 --         hx (d:d2:ds) = niceHex d ++"," ++ hx (d2:ds)
 
 enumerate_all_simple :: Int -> [Ast]
-enumerate_all_simple n = concatMap (\sz -> enumerate_simple sz ++ enumerate_constants_size sz) [1..n]
+enumerate_all_simple n = concatMap (\sz -> -- trace ("working on size "++show sz)
+                                           enumerate_simple sz ++ enumerate_constants_size sz) [1..n]
 
 enumerate_simple :: Int -> [Ast]
 enumerate_simple 1 = [X]
@@ -586,7 +587,7 @@ enumerate_simple n =
    op <- [And, Xor, Or, Plus],
    i <- [1..(n-2)],
    let a_list = enumerate_simple i
-       b_list = filter (/= Zero) $ enumerate_constants_size (n-i-1),
+       b_list = filter (/= Zero) $ enumerate_constants_fast (n-i-1),
    ii <- [0..i-1],
    jj <- if i == n-i
          then [ii .. n-i-1-1]
@@ -610,93 +611,15 @@ enumerate_simple n =
    nc <- [1 .. n-1 - na - nb],
    a <- enumerate_simple na,
    b <- enumerate_simple nb,
-   c <- enumerate_simple nc ++ enumerate_constants_size nc] ++
+   c <- enumerate_simple nc ++ enumerate_constants_fast nc] ++
   [If0 a b c |
    na <- [1 .. n-1 - 2],
    nb <- [1 .. n-1 - 1 - na],
    nc <- [1 .. n-1 - na - nb],
    a <- enumerate_simple na,
-   b <- enumerate_constants_size nb,
+   b <- enumerate_constants_fast nb,
    c <- enumerate_simple nc]
 
-
-enumerate_simple_yz :: Int -> [Ast]
-enumerate_simple_yz 1 = [X,Y,Z]
-enumerate_simple_yz n =
-  [Not a |
-   a <- enumerate_simple_yz (n-1),
-   case a of
-     Not _ -> False
-     _ -> True] ++
-  [Shr1 a |
-   a <- enumerate_simple_yz (n-1),
-   case a of
-     Shl1 _ -> False
-     _ -> True] ++
-  [Shl1 a |
-   a <- enumerate_simple_yz (n-1),
-   case a of
-     Shr1 _ -> False
-     _ -> True] ++
-  [op a |
-   a <- enumerate_simple_yz (n-1),
-   op <- [Shr4, Shr16]] ++
-  [op a b |
-   op <- [And, Xor, Or, Plus],
-   i <- [1..(n-2)],
-   let a_list = enumerate_simple_yz i
-       b_list = filter (/= Zero) $ enumerate_constants_size (n-i-1),
-   ii <- [0..i-1],
-   jj <- if i == n-i
-         then [ii .. n-i-1-1]
-         else [0 .. n-i-1-1],
-   let a = a_list !! ii
-       b = b_list !! jj] ++
-  [op a b |
-   op <- [And, Xor, Or, Plus],
-   i <- [1..(n-2)],
-   let a_list = enumerate_simple_yz i
-       b_list = enumerate_simple_yz (n-i-1),
-   ii <- [0..i-1],
-   jj <- if i == n-i
-         then [ii .. n-i-1-1]
-         else [0 .. n-i-1-1],
-   let a = a_list !! ii
-       b = b_list !! jj] ++
-  [If0 a b c |
-   na <- [1 .. n-1 - 2],
-   nb <- [1 .. n-1 - 1 - na],
-   nc <- [1 .. n-1 - na - nb],
-   a <- enumerate_simple_yz na,
-   b <- enumerate_simple_yz nb,
-   c <- enumerate_simple_yz nc ++ enumerate_constants_size nc] ++
-  [If0 a b c |
-   na <- [1 .. n-1 - 2],
-   nb <- [1 .. n-1 - 1 - na],
-   nc <- [1 .. n-1 - na - nb],
-   a <- enumerate_simple_yz na,
-   b <- enumerate_constants_size nb,
-   c <- enumerate_simple_yz nc]
-
-
-enumerate_simple_fold :: Int -> [Ast]
-enumerate_simple_fold n =
-  [Fold a b c |
-   na <- [1 .. n-2 - 2],
-   nb <- [1 .. n-2 - 1 - na],
-   nc <- [1 .. n-2 - na - nb],
-   a <- enumerate_simple na,
-   b <- enumerate_simple nb ++ enumerate_constants_size nb,
-   c <- enumerate_simple_yz nc]
-  ++
-  [Fold a b c |
-   na <- [1 .. n-2 - 2],
-   nb <- [1 .. n-2 - 1 - na],
-   nc <- [1 .. n-2 - na - nb],
-   a <- enumerate_constants_size na,
-   b <- enumerate_simple nb,
-   c <- enumerate_simple_yz nc]
-  ++ enumerate_simple n
 
 print_constants :: IO ()
 print_constants = mapM_ showsz [1..7]
@@ -707,8 +630,15 @@ simplenums :: [Word64]
 simplenums = map (\c -> eval c 0) $
              enumerate_constants_size 1 ++ enumerate_constants_size 2 ++ enumerate_constants_size 3
 
-enumerate_constants :: [[Ast]]
-enumerate_constants = map enumerate_constants_size [0..]
+enumerate_constants_fast :: Int -> [Ast]
+enumerate_constants_fast = enumerate_constants_memoized
+
+enumerate_constants_memoized :: Int -> [Ast]
+enumerate_constants_memoized sz | sz < 9 = enumerate_constants_constants !! sz
+enumerate_constants_memoized _ = []
+
+enumerate_constants_constants :: [[Ast]]
+enumerate_constants_constants = map (\sz -> enumerate_constants_size sz) [0..]
 
 enumerate_constants_size :: Int -> [Ast]
 enumerate_constants_size 0 = []
