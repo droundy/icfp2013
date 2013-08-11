@@ -196,8 +196,9 @@ enumerate_bonus_expression n musthave mayhave
       e2 <- enumerate_bonus_expression j empty mayhave,
       let e2_ops = find_ast_ops e2,
       let k = n-3-i-j,
+      let notneeded = union op_bonus $ union op_if $ union op_and $ union e1_ops e2_ops,
       e3 <- enumerate_bonus_expression k
-            (musthave `difference` (unions [op_if, op_and, e1_ops, e2_ops]))
+            (musthave `difference` notneeded)
             mayhave ]
   | mayhave `overlapsWith` op_bonus = -- second level (this is one of [e1,e2,e3] from above)
       [ If0 e1 n1 n2 |
@@ -215,7 +216,6 @@ enumerate_bonus_expression n musthave mayhave
         e2 <- enumerate_bonus_expression j
               (musthave `difference` (e1_ops `union` myop))
               (mayhave `difference` op_bonus) ]
-
   | otherwise = binary_tree ++ if_tree ++ unary_tree
   where
     if_tree = [ If0 e1 n1 n2 |
