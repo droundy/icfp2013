@@ -102,9 +102,8 @@ readInfo which sz ident =
      alreadydone <- doesFileExist (problemDir prob ++ "solved")
      return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
 
-time_limit = 5
 srun = "" --"srun -t " ++ show time_limit ++ " "
-methods = ["standard", "3all", "4all", "5all", "6all", "7all", "8all", "9all", "10all", "11all"]
+methods = ["standard", "12all", "11all", "10all", "9all", "8all", "7all", "6all", "5all", "4all", "3all"]
 
 main =
   do nstr:i:test_or_prog:which_process:eval_results <- getArgs
@@ -125,6 +124,7 @@ main =
                 command_end = " " ++ (unwords $ map show results)
                 commands = [command_begin ++ meth ++ command_end | meth <- methods]
             r <- mapM createProcess (map shell commands)
+            threadDelay 300000000 -- hokey way of making sure it stays open for 5 mins
             return ()
        "standard" ->
          do if solved tr then fail "We already solved it."
@@ -185,6 +185,12 @@ main =
               else return ()
             do
                let programs = enumerate_all 11
+               makeGuess tr $ filter (\p -> map (eval p) guesses == a) programs
+       "12all" ->
+         do if solved tr then fail "We already solved it."
+              else return ()
+            do
+               let programs = enumerate_all 12
                makeGuess tr $ filter (\p -> map (eval p) guesses == a) programs
 
 timeMe :: String -> Integer -> IO Integer
