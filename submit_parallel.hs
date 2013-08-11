@@ -30,7 +30,7 @@ getdata speed path body =
                                  case speed of
                                    Slow -> threadDelay 20000000 -- twenty seconds
                                    Fast -> threadDelay  1000000 -- one seconds
-                                 getdata path body
+                                 getdata speed path body
                          else return response
 
 data Problem = Problem {
