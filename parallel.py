@@ -13,7 +13,7 @@ for problem in probIDs:
   if os.path.exists(os.path.join(dirname, problem, "solved")):
     print "problem %s is already solved" % problem
   else:
-    os.system("sbatch -c4 batch_submit.sh %s %s" %(size, problem))
+    os.system("sbatch -c3 -J '%s %s' batch_submit.sh %s %s" %(size, problem, size, problem))
     #time.sleep(10)
 
 
