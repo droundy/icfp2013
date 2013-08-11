@@ -24,6 +24,8 @@ def main():
         for problem in probIDs:
             if os.path.exists(os.path.join(dirname, problem, "solved")):
                 print "problem %s is already solved" % problem
+            elif not os.path.exists(os.path.join(dirname, problem, "fast")):
+                print "problem %s is not fast" % problem
             else:
                 os.system("./make_guess %s %s %s fast"%(size, problem, problems_str))
                 #time.sleep(10)
