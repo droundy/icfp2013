@@ -131,6 +131,93 @@ enumerate_program n musthave0 = enumerate_expression (n-1) musthave musthave
 enumerate_all :: Int -> [Ast]
 enumerate_all n = enumerate_expression (n-1) empty ops_all
 
+enumerate_bonus :: Int -> OperatorSet -> [Ast]
+enumerate_bonus n musthave
+  | musthave `overlapsWith` op_fold || musthave `overlapsWith` op_tfold = []
+  | otherwise = enumerate_bonus_expression (n-1) (musthave `union` op_bonus) (musthave `difference` op_bonus)
+
+
+enumerate_bonus_expression :: Int -> OperatorSet -> OperatorSet -> [Ast]
+enumerate_bonus_expression 1 musthave mayhave
+  | musthave /= empty = [] -- we can't have musthaves here!
+  | otherwise = x10_asts
+
+enumerate_bonus_expression 2 musthave mayhave
+  | minimum_size musthave > 2 = []
+  | musthave /= empty = -- musthave unary
+    [ apply_unary myop e |
+      myop <- (distinctOperators musthave),
+      e <- x10_asts ]
+  | otherwise =
+      [ apply_unary myop e |
+        myop <- (distinctOperators (mayhave `intersection` ops_unary)),
+        e <- x10_asts ]
+
+enumerate_bonus_expression 3 musthave mayhave
+  | minsize > 3 = []
+  | musthave `overlapsWith` ops_binary =
+    [ apply_binary myop e1 e2 |
+      myop <- distinctOperators $ intersection musthave ops_binary,
+      i <- [0..1],
+      j <- [(i+1)..2],
+      let e1 = x10_asts!!i,
+      let e2 = x10_asts!!j ]
+
+  | minsize == 3 = -- musthave two unaries
+    [ apply_unary myop e |
+      myop <- distinctOperators $ intersection musthave ops_unary,
+      e <- enumerate_bonus_expression 2 (musthave `difference` myop) mayhave ]
+
+  | minsize == 2 = -- musthave one unary
+    [ apply_unary myop e |
+      myop <- distinctOperators $ intersection mayhave ops_unary,
+      e <- enumerate_bonus_expression 2 (musthave `difference` myop) mayhave ]
+
+  | otherwise = -- musthave nothing
+    [ apply_unary myop e |
+      myop <- distinctOperators $ intersection mayhave ops_unary,
+      e <- enumerate_expression 2 (musthave `difference` myop) mayhave ] ++
+    [ apply_binary myop e1 e2 |
+      myop <- distinctOperators $ intersection mayhave ops_binary,
+      i <- [0..1],
+      j <- [(i+1)..2],
+      let e1 = x10_asts!!i,
+      let e2 = x10_asts!!j ]
+  where minsize = minimum_size musthave
+
+enumerate_bonus_expression n musthave mayhave
+  | minimum_size musthave > n = []
+  | musthave `overlapsWith` op_bonus =
+    [ If0 (And e1 One) e2 e3 |
+      i <- [5,7..(n-13)],
+      e1 <- enumerate_bonus_expression i empty mayhave ,
+      let e1_ops = find_ast_ops e1,
+      j <- [5,7..(n-8-i)],
+      e2 <- enumerate_bonus_expression j empty mayhave ,
+      let e2_ops = find_ast_ops e2,
+      let k = n-3-i-j,
+      e3 <- enumerate_bonus_expression k
+            (musthave `difference` (e1_ops `union` (e2_ops `union` (op_if `union` op_bonus))))
+            mayhave  ]
+  | otherwise = binary_tree ++ if_tree ++ unary_tree
+  where
+    if_tree = [ If0 e1 n1 n2 |
+                e1 <- enumerate_bonus_expression (n-3) musthave mayhave ,
+                n1 <- x10_asts,
+                n2 <- x10_asts ]
+    binary_tree = [ apply_binary myop e1 e2 |
+                    i <- [1..((n-1)`div`2)],
+                    myop <- filter (overlapsWith ops_binary) $ distinctOperators mayhave,
+                    e1 <- enumerate_bonus_expression i empty mayhave ,
+                    let e1_ops = find_ast_ops e1,
+                    let j = n-1-i,
+                    e2 <- enumerate_bonus_expression j
+                          (musthave `difference` (union e1_ops myop)) mayhave ]
+    unary_tree = [ apply_unary myop e1 |
+                  myop <- filter (overlapsWith ops_unary) $ distinctOperators mayhave,
+                  e1 <- enumerate_bonus_expression (n-1)
+                        (musthave `difference` myop) mayhave ]
+
 enumerate_expression :: Int -> OperatorSet -> OperatorSet -> [Ast]
 enumerate_expression n musthave mayhave
   | musthave `overlapsWith` op_tfold  =

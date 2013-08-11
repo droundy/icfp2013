@@ -12,10 +12,14 @@
 
 (lambda (x) (if0 (and (xor (shr16 (shr16 x)) 1) 1) (or (shr4 (and (shl1 x) x)) x) (plus (not 1) (if0 x 1 x))))
 
-
+(lambda (x_14) (if0 (and (or (plus 1 (shr16 (shl1 x_14))) x_14) 1) (plus x_14 (xor x_14 1)) (plus (xor 1 x_14) 1)))
 
 ; (if0 (and A B) C D) ; few 0, many x and 1
 ;    inside (if0 SOMETHING NULLARY NULLARY)
+
+ (if0 (and A 1) B C)
+ A, B, C all odd size and >= 5
+ never (x x) (1 1) or (0 0)
 
 ;;;;;;;;;;;;;;;;;; indented ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -54,3 +58,55 @@
   (if0 (and (xor (shr16 (shr16 x)) 1) 1)
        (or (shr4 (and (shl1 x) x)) x)
        (plus (not 1) (if0 x 1 x))))
+
+(lambda (x)
+  (if0 (and (or (plus 1 (shr16 (shl1 x_14))) x_14) 1)
+       (plus x_14 (xor x_14 1))
+       (plus (xor 1 x_14) 1)))
+
+
+(lambda (x_18) (if0 (and (if0 (and 1 (shr4 x_18)) 1 0) 1) (and (shr1 (not x_18)) (or x_18 1)) (plus x_18 (not (shr1 x_18)))))
+
+(lambda (x)
+  (if0 (and (not (shr4 (not (plus (if0 (shr16 x) 0 x) 0)))) 1)
+       (xor (shr16 x) (or (if0 (shr1 (and (not 1) x)) x 1) x))
+       (plus (shr4 (shr1 (if0 (and (xor (shr4 0) 1) x) 1 x))) x)))
+
+
+(lambda (x)
+  (if0 (and (xor (shr4 (shr16 (if0 (plus (xor (shr4 x) 1) x) 0 x))) x) 1)
+       (not (xor (shl1 (if0 (and (shl1 (not 0)) (shr1 x)) 0 x)) 0))
+       (xor (if0 (shr1 x) (shr1 1) x) (shl1 1))))
+
+   If0 (And (And X X) One)
+       (And X X)
+       (And X (Xor One (Plus Zero (Shl1 (Shr16 (Or One One))))))
+
+(lambda (x)
+  (if0 (and (or (plus 1 (shr16 (shl1 x))) x) 1)
+       (plus x (xor x 1))
+       (plus (xor 1 x) 1)))
+
+
+
+(lambda (x)
+  (if0 (and (xor x (plus (shr16 (not x)) x)) 1)
+       (not (xor (shl1 1) (shr4 (shl1 x))))
+       (xor (plus x 1) 1)))
+
+
+
+(lambda (x_10) (if0 (and (if0 (plus x_10 (not 1)) 0 (xor 1 x_10)) 1) (plus (plus (if0 (plus (shr4 x_10) (or x_10 1)) 1 x_10) x_10) 0) (not (if0 (shr16 (and (xor (shl1 (shr4 (shr16 x_10))) 0) x_10)) 1 x_10))))
+
+lambda (x_16) (if0 (and (or (shr16 x_16) (if0 (plus (or (or 0 x_16) 0) 1) 0 x_16)) 1) (plus (shr16 x_16) (shr16 (if0 (plus (or (shr1 1) x_16) x_16) 0 x_16))) (shr1 (shl1 (shl1 (if0 (plus (shl1 (or (not 1) 1)) x_16) 1 x_16))))))
+
+
+   If0 (And (And X (Shl1 (Shl1 X))) One)
+       (And X (Shr16 (Shl1 Zero)))
+       (Xor (Or X One) (Plus One Zero))
+
+
+(lambda (x)
+  (if0 (and (xor 1 (shr4 (or (shr1 x) x))) 1)
+  (xor (shr16 (shr4 x)) (plus 1 x))
+  (not (xor (shl1 x) x))))
