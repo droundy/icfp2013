@@ -9,6 +9,7 @@ runit
 lookup_problems
 get_training
 check_status
+test_simple
 make_guess
 make_guess_bonus
 make_guess_simple
