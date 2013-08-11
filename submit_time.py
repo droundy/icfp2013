@@ -25,7 +25,7 @@ def main():
             probIDs = [name for name in os.listdir('trainings/%s'%(size))]
         for problem in probIDs:
             fastname = "%s/%s/fast"%(dirname,problem)
-            solvdname = "%s/%s/solved"%(dirname,problem)
+            solvedname = "%s/%s/solved"%(dirname,problem)
             if not os.path.exists(fastname) and not os.path.exists(solvedname):
                 #we can do many of these at once if we so desire
                 startTime = time.time()
