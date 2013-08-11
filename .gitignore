@@ -10,6 +10,8 @@ lookup_problems
 get_training
 check_status
 make_guess
+make_guess_bonus
+make_guess_simple
 submit_parallel
 pull_from_everyone.sh
 trainings/

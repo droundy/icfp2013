@@ -128,7 +128,7 @@ xyz10_asts = [Z, Y, X, One, Zero]
 
 -- enumerate (requires a size and TWO OperatorSets (definitely and maybe))
 enumerate_program :: Int -> OperatorSet -> [Ast]
-enumerate_program n musthave0 = enumerate_expression (n-1) musthave musthave
+enumerate_program n musthave0 = trace ("musthave: " ++ show musthave) enumerate_expression (n-1) musthave musthave
   where musthave = musthave0 `difference` op_bonus
 
 enumerate_all :: Int -> [Ast]
@@ -192,7 +192,8 @@ enumerate_bonus_expression n musthave mayhave
   | minimum_size musthave > n = []
   | musthave `overlapsWith` op_bonus = -- this is the first level
     [ If0 (And e1 One) e2 e3 |
-      i <- [5,7..(n-13)],
+      let begin = if n `mod` 2 == 0 then 6 else 5,
+      i <- [begin,begin+2..(n-13)],
       e1 <- enumerate_bonus_expression i empty mayhave,
       let e1_ops = find_ast_ops e1,
       j <- [5,7..(n-8-i)],
@@ -338,7 +339,9 @@ enumerate_expression 4 musthave mayhave
 
 enumerate_expression n musthave mayhave
   | minimum_size musthave > n = []
-  | otherwise = unary_tree ++ binary_tree ++ if_tree ++ fold_tree
+  | otherwise = unary_tree ++ binary_tree ++
+                if mayhave `overlapsWith` op_if then if_tree else [] ++
+                if mayhave `overlapsWith` op_fold then fold_tree else []
   where
     fold_tree = [ Fold e1 e2 e3 |
                  i <- [1..(n-2-2)],

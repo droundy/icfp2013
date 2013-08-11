@@ -1,6 +1,5 @@
 module Main where
 
-import System.Process
 import Data.Word ( Word64 )
 import System.Exit ( exitSuccess )
 import System.CPUTime ( getCPUTime )
@@ -33,6 +32,7 @@ data Problem = Problem {
   problemid :: String,
   problemsize :: Int,
   operators :: OperatorSet,
+  fast :: Bool,
   solved :: Bool
   }
              deriving ( Show )
@@ -76,16 +76,16 @@ problemDir p = kdir ++ show (problemsize p) ++ "/" ++ problemid p ++ "/"
   where kdir = case problemkind p of DoTrain -> "trainings/"
                                      DoProblem -> "problems/"
 
-makeGuess :: String -> Problem -> [Ast] -> IO ()
-makeGuess which_process _ [] = fail (which_process ++ " method failed!")
-makeGuess which_process prob (b:bs) =
+makeGuess :: Problem -> [Ast] -> IO ()
+makeGuess _ [] = fail "I have no idea!"
+makeGuess prob (b:bs) =
   do r <- submitGuess prob b
      case r of
        Nothing -> do putStrLn "We won, we won!!!"
                      writeFile (problemDir prob ++ "solved") "solved\n"
        Just (inp, out, _) ->
          do putStrLn $ "I could do better on " ++ niceHex inp
-            makeGuess which_process prob (filter (\p -> eval p inp == out) bs)
+            makeGuess prob (filter (\p -> eval p inp == out) bs)
 
 data TrainOrProblem = DoTrain | DoProblem
                     deriving ( Show, Read, Eq )
@@ -97,71 +97,55 @@ readInfo which sz ident =
            problemid = ident,
            problemsize = sz,
            operators = empty,
+           fast = False,
            solved = False }
      ops <- readFile (problemDir prob ++ "operators")
      alreadydone <- doesFileExist (problemDir prob ++ "solved")
-     return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
+     isfast <- doesFileExist (problemDir prob ++ "fast")
+     return prob { operators = toOperatorSet $ read ops, solved = alreadydone, fast = isfast }
 
-srun = ""
-methods = ["standard", "simple", "bonus", "11all", "7all"]
+main = do nstr:i:args <- getArgs
+          let todo = case args of
+                [] -> ""
+                _ | "time" `elem` args -> "time"
+                  | "count-programs" `elem` args -> "count-programs"
+                  | "fast" `elem` args -> "fast"
+                  | "problem" `elem` args -> ""
+              kind = if "problem" `elem` args
+                     then DoProblem
+                     else DoTrain
+              n = read nstr
+          tr <- readInfo kind n i
+          if solved tr then putStrLn "It is already solved!" else return ()
+          putStrLn $ show tr
+          start <- timeMe "File IO" 0
+          case todo of
+            "time" ->
+                 do let programs = enumerate_all_simple 500
+                        rndprograms = filter isrnd programs
+                        isrnd p = map (eval p) guesses == rndout
+                        rndout = take (length guesses) $ randoms (mkStdGen 1)
+                    printNumber $ length rndprograms
+                    start <- timeMe "Filtering random programs" start
+                    exitSuccess
+            "count-programs" ->
+                 do let programs = enumerate_all_simple 500
+                    printNumber (length programs)
+                    start <- timeMe "Counting programs" start
+                    exitSuccess
+            "" -> do if solved tr then fail "We already solved it."
+                                  else return ()
+                     a <- submitEval tr guesses
+                     let programs = enumerate_all_simple 500
+                     makeGuess tr $ filter (\p -> map (eval p) guesses == a) programs
+            "fast" -> do if solved tr then fail "We already solved it."
+                                      else return ()
+                         if not (fast tr)
+                           then putStrLn "It is not fast."
+                           else do a <- submitEval tr guesses
+                                   let programs = enumerate_all_simple 500
+                                   makeGuess tr $ filter (\p -> map (eval p) guesses == a) programs
 
-main =
-  do nstr:i:test_or_prog:which_process:eval_results <- getArgs
-     let kind = if test_or_prog == "program"
-                then DoProblem
-                else DoTrain
-         n = read nstr :: Int
-         a = map read eval_results
-     tr <- readInfo kind n i
-     if solved tr then putStrLn "It is already solved!" else return ()
-     putStrLn $ show tr
-     start <- timeMe "File IO" 0
-     case which_process of
-       "master" ->
-         do results <- submitEval tr guesses
-            let command_begin = srun ++ "./submit_parallel " ++ nstr ++ " " ++ i
-                                ++ " " ++ test_or_prog ++ " "
-                command_end = " " ++ (unwords $ map show results)
-                commands = [command_begin ++ meth ++ command_end | meth <- methods]
-            r <- mapM createProcess (map shell commands)
-            threadDelay 400000000 -- hokey way of making sure it stays open for over mins (will be killed after 5 anyway)
-            return ()
-       "standard" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_program (problemsize tr) (operators tr)
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "7all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 7
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "11all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 11
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "16all" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all 16
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "simple" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_all_simple 500
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
-       "bonus" ->
-         do if solved tr then fail "We already solved it."
-              else return ()
-            do
-               let programs = enumerate_bonus (problemsize tr) (operators tr)
-               makeGuess which_process tr $ filter (\p -> map (eval p) guesses == a) programs
 
 timeMe :: String -> Integer -> IO Integer
 timeMe job start =
