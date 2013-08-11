@@ -102,8 +102,8 @@ readInfo which sz ident =
      alreadydone <- doesFileExist (problemDir prob ++ "solved")
      return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
 
-srun = "" --"srun -t " ++ show time_limit ++ " "
-methods = ["standard", "simple", "bonus", "16all", "11all", "7all"]
+srun = ""
+methods = ["standard", "simple", "bonus", "11all", "7all"]
 
 main =
   do nstr:i:test_or_prog:which_process:eval_results <- getArgs

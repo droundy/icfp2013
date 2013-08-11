@@ -192,7 +192,8 @@ enumerate_bonus_expression n musthave mayhave
   | minimum_size musthave > n = []
   | musthave `overlapsWith` op_bonus = -- this is the first level
     [ If0 (And e1 One) e2 e3 |
-      i <- [5,7..(n-13)],
+      let begin = if n `mod` 2 == 0 then 6 else 5,
+      i <- [begin,begin+2..(n-13)],
       e1 <- enumerate_bonus_expression i empty mayhave,
       let e1_ops = find_ast_ops e1,
       j <- [5,7..(n-8-i)],
