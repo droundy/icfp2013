@@ -9,5 +9,6 @@ lookup_problems
 get_training
 check_status
 make_guess
+submit_parallel
 pull_from_everyone.sh
 trainings/
