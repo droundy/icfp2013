@@ -103,7 +103,7 @@ readInfo which sz ident =
      return prob { operators = toOperatorSet $ read ops, solved = alreadydone }
 
 srun = "" --"srun -t " ++ show time_limit ++ " "
-methods = ["standard", "bonus", "16all", "15all", "14all", "13all", "12all", "11all", "10all", "9all", "8all", "7all", "6all", "5all", "4all", "3all"]
+methods = ["standard", "bonus", "16all", "10all", "7all"]
 
 main =
   do nstr:i:test_or_prog:which_process:eval_results <- getArgs
