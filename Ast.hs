@@ -602,7 +602,7 @@ enumerate_simple n =
    i <- [1..(n-2)],
    let a_list = enumerate_simple i
        b_list = enumerate_simple (n-i-1),
-   ii <- [0 .. length a_list],
+   ii <- [0 .. length a_list - 1],
    jj <- if i == n-i
          then [ii .. length b_list - 1]
          else [0 .. length b_list - 1],
