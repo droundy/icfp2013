@@ -5,6 +5,9 @@ import Data.Tuple ( swap )
 import Data.Word ( Word8, Word16, Word64 )
 import Data.Bits ( Bits(..) )
 import System.Random
+import Data.List ( sort )
+
+import qualified Data.Map as Map
 
 import Debug.Trace
 
@@ -125,7 +128,7 @@ xyz10_asts = [Z, Y, X, One, Zero]
 
 -- enumerate (requires a size and TWO OperatorSets (definitely and maybe))
 enumerate_program :: Int -> OperatorSet -> [Ast]
-enumerate_program n musthave0 = enumerate_expression (n-1) musthave musthave
+enumerate_program n musthave0 = trace ("musthave: " ++ show musthave) enumerate_expression (n-1) musthave musthave
   where musthave = musthave0 `difference` op_bonus
 
 enumerate_all :: Int -> [Ast]
@@ -134,7 +137,7 @@ enumerate_all n = enumerate_expression (n-1) empty ops_all
 enumerate_bonus :: Int -> OperatorSet -> [Ast]
 enumerate_bonus n musthave
   | musthave `overlapsWith` op_fold || musthave `overlapsWith` op_tfold = []
-  | otherwise = enumerate_bonus_expression (n-1) (musthave `union` op_bonus) (musthave `difference` op_bonus)
+  | otherwise = enumerate_bonus_expression (n-1) (musthave `union` op_bonus) (musthave `union` op_bonus)
 
 
 enumerate_bonus_expression :: Int -> OperatorSet -> OperatorSet -> [Ast]
@@ -187,22 +190,42 @@ enumerate_bonus_expression 3 musthave mayhave
 
 enumerate_bonus_expression n musthave mayhave
   | minimum_size musthave > n = []
-  | musthave `overlapsWith` op_bonus =
+  | musthave `overlapsWith` op_bonus = -- this is the first level
     [ If0 (And e1 One) e2 e3 |
-      i <- [5,7..(n-13)],
-      e1 <- enumerate_bonus_expression i empty mayhave ,
+      let begin = if n `mod` 2 == 0 then 6 else 5,
+      i <- [begin,begin+2..(n-13)],
+      e1 <- enumerate_bonus_expression i empty mayhave,
       let e1_ops = find_ast_ops e1,
       j <- [5,7..(n-8-i)],
-      e2 <- enumerate_bonus_expression j empty mayhave ,
+      e2 <- enumerate_bonus_expression j empty mayhave,
       let e2_ops = find_ast_ops e2,
       let k = n-3-i-j,
+      let notneeded = union op_bonus $ union op_if $ union op_and $ union e1_ops e2_ops,
       e3 <- enumerate_bonus_expression k
-            (musthave `difference` (e1_ops `union` (e2_ops `union` (op_if `union` op_bonus))))
-            mayhave  ]
+            (musthave `difference` notneeded)
+            mayhave ]
+  | mayhave `overlapsWith` op_bonus = -- second level (this is one of [e1,e2,e3] from above)
+      [ If0 e1 n1 n2 |
+        e1 <- enumerate_bonus_expression (n-3)
+              (musthave `difference` op_if)
+              (mayhave `difference` op_bonus),
+        n1 <- x10_asts,
+        n2 <- x10_asts ] ++
+      [ apply_binary myop e1 e2 |
+        i <- [1..((n-1)`div`2)],
+        myop <- filter (overlapsWith ops_binary) $ distinctOperators mayhave,
+        e1 <- enumerate_bonus_expression i empty (mayhave `difference` op_bonus),
+        let e1_ops = find_ast_ops e1,
+        let j = n-1-i,
+        e2 <- enumerate_bonus_expression j
+              (musthave `difference` (e1_ops `union` myop))
+              (mayhave `difference` op_bonus) ]
   | otherwise = binary_tree ++ if_tree ++ unary_tree
   where
     if_tree = [ If0 e1 n1 n2 |
-                e1 <- enumerate_bonus_expression (n-3) musthave mayhave ,
+                e1 <- enumerate_bonus_expression (n-3)
+                      (musthave `difference` op_if)
+                      mayhave ,
                 n1 <- x10_asts,
                 n2 <- x10_asts ]
     binary_tree = [ apply_binary myop e1 e2 |
@@ -212,7 +235,7 @@ enumerate_bonus_expression n musthave mayhave
                     let e1_ops = find_ast_ops e1,
                     let j = n-1-i,
                     e2 <- enumerate_bonus_expression j
-                          (musthave `difference` (union e1_ops myop)) mayhave ]
+                          (musthave `difference` (e1_ops `union` myop)) mayhave ]
     unary_tree = [ apply_unary myop e1 |
                   myop <- filter (overlapsWith ops_unary) $ distinctOperators mayhave,
                   e1 <- enumerate_bonus_expression (n-1)
@@ -316,7 +339,9 @@ enumerate_expression 4 musthave mayhave
 
 enumerate_expression n musthave mayhave
   | minimum_size musthave > n = []
-  | otherwise = unary_tree ++ binary_tree ++ if_tree ++ fold_tree
+  | otherwise = unary_tree ++ binary_tree ++
+                if mayhave `overlapsWith` op_if then if_tree else [] ++
+                if mayhave `overlapsWith` op_fold then fold_tree else []
   where
     fold_tree = [ Fold e1 e2 e3 |
                  i <- [1..(n-2-2)],
@@ -535,3 +560,128 @@ hexes = show . map niceHex
 --   where hx [] = "]"
 --         hx [d] = niceHex d ++ "]"
 --         hx (d:d2:ds) = niceHex d ++"," ++ hx (d2:ds)
+
+enumerate_all_simple :: Int -> [Ast]
+enumerate_all_simple n = concatMap (\sz -> -- trace ("working on size "++show sz)
+                                           enumerate_simple sz ++ enumerate_constants_size sz) [1..n]
+
+enumerate_simple :: Int -> [Ast]
+enumerate_simple 1 = [X]
+enumerate_simple n =
+  [Not a |
+   a <- enumerate_simple (n-1),
+   case a of
+     Not _ -> False
+     _ -> True] ++
+  [Shr1 a |
+   a <- enumerate_simple (n-1),
+   case a of
+     Shl1 _ -> False
+     _ -> True] ++
+  [Shl1 a |
+   a <- enumerate_simple (n-1),
+   case a of
+     Shr1 _ -> False
+     _ -> True] ++
+  [op a |
+   a <- enumerate_simple (n-1),
+   op <- [Shr4, Shr16]] ++
+  [op a b |
+   op <- [And, Xor, Or, Plus],
+   i <- [1..(n-2)],
+   let a_list = enumerate_simple i
+       b_list = filter (/= Zero) $ enumerate_constants_fast (n-i-1),
+   ii <- [0..i-1],
+   jj <- if i == n-i
+         then [ii .. n-i-1-1]
+         else [0 .. n-i-1-1],
+   let a = a_list !! ii
+       b = b_list !! jj] ++
+  [op a b |
+   op <- [And, Xor, Or, Plus],
+   i <- [1..(n-2)],
+   let a_list = enumerate_simple i
+       b_list = enumerate_simple (n-i-1),
+   ii <- [0..i-1],
+   jj <- if i == n-i
+         then [ii .. n-i-1-1]
+         else [0 .. n-i-1-1],
+   let a = a_list !! ii
+       b = b_list !! jj] ++
+  [If0 a b c |
+   na <- [1 .. n-1 - 2],
+   nb <- [1 .. n-1 - 1 - na],
+   nc <- [1 .. n-1 - na - nb],
+   a <- enumerate_simple na,
+   b <- enumerate_simple nb,
+   c <- enumerate_simple nc ++ enumerate_constants_fast nc] ++
+  [If0 a b c |
+   na <- [1 .. n-1 - 2],
+   nb <- [1 .. n-1 - 1 - na],
+   nc <- [1 .. n-1 - na - nb],
+   a <- enumerate_simple na,
+   b <- enumerate_constants_fast nb,
+   c <- enumerate_simple nc]
+
+
+print_constants :: IO ()
+print_constants = mapM_ showsz [1..7]
+  where showsz sz = putStrLn $ show sz ++ ": " ++ shownice (enumerate_constants_size sz)
+        shownice = show . sort . map (\c -> niceHex $ eval c 0)
+
+simplenums :: [Word64]
+simplenums = map (\c -> eval c 0) $
+             enumerate_constants_size 1 ++ enumerate_constants_size 2 ++ enumerate_constants_size 3
+
+enumerate_constants_fast :: Int -> [Ast]
+enumerate_constants_fast = enumerate_constants_memoized
+
+enumerate_constants_memoized :: Int -> [Ast]
+enumerate_constants_memoized sz | sz < 9 = enumerate_constants_constants !! sz
+enumerate_constants_memoized _ = []
+
+enumerate_constants_constants :: [[Ast]]
+enumerate_constants_constants = map (\sz -> enumerate_constants_size sz) [0..]
+
+enumerate_constants_size :: Int -> [Ast]
+enumerate_constants_size 0 = []
+enumerate_constants_size 1 = [Zero, One]
+enumerate_constants_size 2 = [Shl1 One, Not One, Not Zero]
+enumerate_constants_size 3 = [Shl1 $ Shl1 One,
+                              Not $ Shl1 One,
+                              Shr1 $ Not One,
+                              Shr4 $ Not One,
+                              Shr16 $ Not One]
+enumerate_constants_size n = nub_constants $
+                             [c |
+                              i <- [1..(n-1)],
+                              let a_list = enumerate_constants_size i
+                                  b_list = if i == n-i
+                                           then a_list
+                                           else enumerate_constants_size (n-i-1),
+                              ii <- [0..length a_list - 1],
+                              jj <- if i == n-i
+                                    then [ii .. length b_list - 1]
+                                    else [0 .. length b_list - 1],
+                              let a = a_list !! ii
+                                  b = b_list !! jj,
+                              op <- [Xor],
+                              a /= Zero,
+                              b /= Zero,
+                              let c = op a b
+                                  cval = eval c 0,
+                              cval `notElem` simplenums] ++
+                             [c |
+                              a <- enumerate_constants_size (n-1),
+                              op <- [Shl1, Shr1, Shr4, Shr16],
+                              let c = op a
+                                  cval = eval c 0
+                                  aval = eval a 0,
+                              cval `notElem` simplenums,
+                              cval /= aval]
+
+nub_expressions_by :: [Word64] -> [Ast] -> [Ast]
+nub_expressions_by g = map snd . Map.toList . Map.fromList . map (\p -> (map (eval p) g, p))
+
+nub_constants :: [Ast] -> [Ast]
+nub_constants = map snd . Map.toList . Map.fromList . map (\p -> (eval p 0, p))
