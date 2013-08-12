@@ -12,7 +12,7 @@ def main():
             if os.path.exists(os.path.join(dirname, problem, "solved")):
                 print "problem %s is already solved" % problem
             else:
-                os.system("./submit_parallel %s %s %s program master"%(size, problem, problems_str))
+                os.system("./submit_parallel %s %s program master"%(size, problem))
                 #time.sleep(10)
 
 if __name__ == '__main__':
